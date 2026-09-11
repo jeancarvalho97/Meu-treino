@@ -1,0 +1,89 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>Meu Treino V4</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#111827;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:80px}
+header{background:#111827;color:#fff;padding:18px 16px 12px;position:sticky;top:0;z-index:20}h1{margin:0;font-size:24px}.sub{font-size:12px;opacity:.7}
+nav{display:flex;gap:7px;overflow:auto;background:#fff;padding:9px 12px;position:sticky;top:71px;z-index:19;border-bottom:1px solid #ddd}nav button{border:0;border-radius:18px;padding:8px 13px;background:#e5e7eb;font-weight:800;white-space:nowrap}nav button.on{background:#111827;color:#fff}
+main{max-width:700px;margin:auto;padding:12px}.hero,.panel,.card{background:#fff;border-radius:15px;padding:14px;margin:10px 0;box-shadow:0 2px 9px #0000000b}
+h2{font-size:20px;margin:0 0 3px}.muted{font-size:12px;color:#6b7280}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.metric{background:#f3f4f6;border-radius:11px;padding:9px}.metric b{display:block;font-size:18px}
+.timer{display:flex;align-items:center;justify-content:space-between;background:#111827;color:#fff;border-radius:13px;padding:10px;margin-top:10px}.clock{font-size:25px;font-weight:850}.timer button{border:0;border-radius:9px;padding:9px;font-weight:800}
+.card.done{opacity:.6}.ename{font-weight:800}.sets{font-size:12px;color:#6b7280;margin-top:2px}.setrow{display:grid;grid-template-columns:30px 1fr 1fr 36px;gap:6px;align-items:center;margin-top:6px}.setrow span{font-size:12px;color:#6b7280;text-align:center}.setrow input{width:100%;padding:9px;border:1px solid #d1d5db;border-radius:9px;font-size:15px;background:#fff}.setrow input[type=checkbox]{width:32px;height:32px}.savedbox{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;padding:9px 10px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0}.savedload{font-weight:850;color:#166534}.savedbox button{border:0;border-radius:8px;padding:7px 9px;font-weight:800;background:#dcfce7;color:#166534}.sethint{font-size:11px;color:#6b7280;margin-top:6px}
+.note{width:100%;min-height:43px;margin-top:8px;border:1px solid #d1d5db;border-radius:9px;padding:8px;font-family:inherit}
+button.action{width:100%;border:0;border-radius:10px;padding:11px;margin-top:8px;font-weight:800}.green{background:#16a34a;color:#fff}.gray{background:#e5e7eb}
+.bar{height:10px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:8px 0}.fill{height:100%;width:0;background:#16a34a}
+.tabs{display:flex;gap:7px;margin-bottom:9px}.tabs button{flex:1;padding:9px;border:0;border-radius:9px;font-weight:750;background:#e5e7eb}.tabs button.sel{background:#111827;color:#fff}
+.historyrow{border-bottom:1px solid #eee;padding:8px 0;font-size:13px}.empty{color:#6b7280;font-size:13px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:8px 10px;display:flex;gap:6px;z-index:30}.bottom button{flex:1;border:0;border-radius:9px;padding:9px;font-weight:800}
+</style></head><body>
+<header><h1>🏋️ Meu Treino V4</h1><div class="sub">Diário de treino • cargas salvas • evolução • histórico • descanso</div></header>
+<nav id="nav"></nav><main><div id="app"></div></main>
+<div class="bottom"><button onclick="startTimer(60)">⏱ 60s</button><button onclick="startTimer(90)">⏱ 90s</button><button onclick="startTimer(120)">⏱ 120s</button><button onclick="stopTimer()">Parar</button></div>
+<script>
+const nav = document.getElementById('nav');
+const app = document.getElementById('app');
+const days=[
+["SEG","Peito • Tríceps • Ombro • Panturrilha",[
+["Supino inclinado com barra","3×6–10"],["Supino reto com barra","3×8–10"],["Crossover na polia alta","3×8–12"],["Crucifixo na máquina","3×10–15"],["Tríceps na polia com barra","3×8–12"],["Tríceps francês com corda","3×10–12"],["Desenvolvimento com halteres","3×8–12"],["Elevação lateral","3×12–15"],["Panturrilha em pé","4×10–15"]]],
+["TER","Costas • Bíceps • Antebraço • Abdômen",[
+["Barra fixa ou puxada alta","3×6–10"],["Remada curvada com barra","3×8–10"],["Remada baixa","3×8–12"],["Crucifixo inverso","3×8–10"],["Rosca direta com barra","3×8–10"],["Rosca 45º com halter","3×10–12"],["Rosca martelo","3×10–12"],["Rosca inversa","3×10–15"],["Abdominal na polia","3×12–15"]]],
+["QUA","Pernas completas • Panturrilha",[
+["Agachamento livre","3×6–10"],["Leg press 45°","3×8–12"],["Cadeira extensora — drop-set na última","3×10–15"],["Mesa flexora","3×10–15"],["Stiff","3×8–12"],["Afundo no leg horizontal","3×8–12"],["Panturrilha no leg press","4×10–15"]]],
+["QUI","Peito • Tríceps • Ombro • Abdômen",[
+["Supino inclinado na máquina","3×8–10"],["Supino reto na máquina","3×8–12"],["Crossover na polia","3×10–15"],["Crucifixo inclinado na polia","3×12–15"],["Tríceps testa","3×8–12"],["Tríceps corda","3×10–15"],["Desenvolvimento na máquina","3×8–12"],["Elevação lateral na polia","3×12–15"],["Abdominal infra","3×10–15"]]],
+["SEX","Costas • Bíceps • Antebraço • Panturrilha",[
+["Puxada alta","3×8–12"],["Remada curvada","3×8–12"],["Pulldown na corda","3×10–15"],["Crucifixo inverso com halter","3×10–15"],["Rosca alternada com halter","3×8–12"],["Rosca Scott","3×10–12"],["Rosca martelo na corda","3×10–15"],["Flexão de punho com barra","3×12–20"],["Panturrilha em pé","4×10–15"]]]
+]], K='treinoV3', H='treinoV3hist';let active=0,tab='treino',db=JSON.parse(localStorage.getItem(K)||'{}'),hist=JSON.parse(localStorage.getItem(H)||'[]'),timer=0,iv=null;
+function save(){localStorage.setItem(K,JSON.stringify(db))}function wk(){let d=new Date(),one=new Date(d.getFullYear(),0,1);return Math.ceil((((d-one)/864e5)+one.getDay()+1)/7)}
+function renderNav(){nav.innerHTML=days.map((d,i)=>`<button class="${i==active?'on':''}" onclick="active=${i};tab='treino';render()">${d[0]}</button>`).join('')}
+function render(){renderNav(); if(tab==='historico'){renderHistory();return} if(tab==='evolucao'){renderEvolution();return} renderWorkout()}
+function renderWorkout(){
+ let d=days[active], total=d[2].length, done=d[2].filter((_,i)=>db[active+'-'+i]?.done).length, vol=0,best=0;
+ d[2].forEach((_,i)=>{let r=db[active+'-'+i]||{};for(let s=1;s<=6;s++){let x=r['s'+s];if(x){vol+=(parseFloat(x.c)||0)*(parseFloat(x.r)||0);best=Math.max(best,parseFloat(x.c)||0)}}});
+ let out=`<div class="hero"><h2>${d[0]}</h2><div class="muted">${d[1]}</div><div class="metrics"><div class="metric"><small>Concluídos</small><b>${done}/${total}</b></div><div class="metric"><small>Volume</small><b>${Math.round(vol)} kg</b></div><div class="metric"><small>Maior carga</small><b>${best} kg</b></div></div><div class="timer"><div><div class="muted" style="color:#aaa">DESCANSO</div><div id="clock" class="clock">${fmt(timer)}</div></div><button onclick="startTimer(90)">Iniciar 90s</button></div></div>`;
+ d[2].forEach((e,i)=>{let r=db[active+'-'+i]||{},n=parseInt(e[1])||3;out+=`<div class="card ${r.done?'done':''}"><div class="ename">${i+1}. ${e[0]}</div><div class="sets">${e[1]}</div>`;
+ for(let s=1;s<=n;s++){let x=r['s'+s]||{};out+=`<div class="setrow"><span>S${s}</span><input inputmode="decimal" placeholder="kg" value="${x.c||''}" onchange="upd(${i},${s},'c',this.value)"><input inputmode="numeric" placeholder="reps" value="${x.r||''}" onchange="upd(${i},${s},'r',this.value)"><input type="checkbox" ${x.ok?'checked':''} onchange="upd(${i},${s},'ok',this.checked)"></div>`}
+ out+=`<textarea class="note" placeholder="Observação..." onchange="note(${i},this.value)">${r.note||''}</textarea><button class="action gray" onclick="toggleDone(${i})">${r.done?'↩ Reabrir exercício':'✓ Marcar exercício concluído'}</button></div>`});
+ out+=`<div class="panel"><div class="bar"><div class="fill" style="width:${Math.round(done/total*100)}%"></div></div><b>${Math.round(done/total*100)}% concluído</b><button class="action green" onclick="finish()">✓ CONCLUIR TREINO</button><button class="action gray" onclick="clearDay()">Limpar registros do dia</button><button class="action gray" onclick="tab='evolucao';render()">📈 Ver evolução</button></div>`;
+ app.innerHTML=out;
+}
+function keyFor(i){return active+'-'+i}
+function getSavedLoad(i){
+  let r=db[keyFor(i)]||{}, loads=[];
+  for(let s=1;s<=6;s++){let x=r['s'+s];if(x?.c)loads.push(parseFloat(x.c))}
+  return loads.length?Math.max(...loads):''
+}
+function saveLoadFromSet(i,s,v){
+  let r=db[keyFor(i)]||{};
+  r.savedLoad=v;
+  db[keyFor(i)]=r;
+  save();
+  renderWorkout();
+}
+function applySavedLoad(i){
+  let r=db[keyFor(i)]||{}, v=r.savedLoad;
+  if(v==='' || v==null)return;
+  let n=parseInt(days[active][2][i][1])||3;
+  for(let s=1;s<=n;s++) r['s'+s]={...(r['s'+s]||{}),c:v};
+  db[keyFor(i)]=r; save(); renderWorkout();
+}
+function clearSavedLoad(i){
+  let r=db[keyFor(i)]||{};
+  delete r.savedLoad;
+  db[keyFor(i)]=r; save(); renderWorkout();
+}
+function upd(i,s,k,v){let r=db[active+'-'+i]||{};r['s'+s]={...(r['s'+s]||{}),[k]:v};if(k==='c'&&v!=='')r.savedLoad=v;db[active+'-'+i]=r;save();renderWorkout()}
+function note(i,v){let r=db[active+'-'+i]||{};r.note=v;db[active+'-'+i]=r;save()}
+function toggleDone(i){let r=db[active+'-'+i]||{};r.done=!r.done;db[active+'-'+i]=r;save();render()}
+function finish(){days[active][2].forEach((_,i)=>{let r=db[active+'-'+i]||{};r.done=true;db[active+'-'+i]=r});save();hist.unshift({day:days[active][0],date:new Date().toLocaleString('pt-BR'),week:wk()});hist=hist.slice(0,100);localStorage.setItem(H,hist);render();alert('Treino concluído e salvo!')}
+function clearDay(){if(confirm('Apagar todos os registros deste dia?')){days[active][2].forEach((_,i)=>delete db[active+'-'+i]);save();render()}}
+function renderHistory(){app.innerHTML=`<div class="panel"><div class="tabs"><button onclick="tab='treino';render()">Treino</button><button onclick="tab='historico';render()" class="sel">Histórico</button><button onclick="tab='evolucao';render()">Evolução</button></div><h2>📅 Histórico</h2>${hist.map(x=>`<div class="historyrow">✓ <b>${x.day}</b> — ${x.date} <span class="muted">• semana ${x.week}</span></div>`).join('')||'<div class="empty">Nenhum treino concluído.</div>'}</div><div class="panel"><button class="action gray" onclick="exportAll()">📤 Exportar backup</button><button class="action gray" onclick="importData()">📥 Importar backup</button></div>`}
+function renderEvolution(){let names=[];days.forEach((d,di)=>d[2].forEach((e,i)=>{let vals=[];for(let h=0;h<hist.length;h++){let r=db[di+'-'+i];if(r)for(let s=1;s<=6;s++){let x=r['s'+s];if(x?.c)vals.push(parseFloat(x.c))}}if(vals.length)names.push({n:e[0],best:Math.max(...vals),count:vals.length})}));
+ app.innerHTML=`<div class="panel"><div class="tabs"><button onclick="tab='treino';render()">Treino</button><button onclick="tab='historico';render()">Histórico</button><button class="sel">Evolução</button></div><h2>📈 Evolução</h2><p class="muted">Melhor carga registrada neste aparelho.</p>${names.map(x=>`<div class="historyrow"><b>${x.n}</b><br><span class="muted">Melhor carga: </span><b>${x.best} kg</b> <span class="muted">• ${x.count} registros</span></div>`).join('')||'<div class="empty">Comece a registrar cargas para gerar sua evolução.</div>'}</div>`}
+function startTimer(sec){clearInterval(iv);timer=sec;tick();iv=setInterval(()=>{timer--;tick();if(timer<=0){clearInterval(iv);if(navigator.vibrate)navigator.vibrate([300,150,300]);alert('⏰ Descanso encerrado!')}},1000)}
+function stopTimer(){clearInterval(iv);timer=0;tick()}function tick(){let c=document.getElementById('clock');if(c)c.textContent=fmt(timer)}function fmt(x){return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
+function exportAll(){let blob=new Blob([JSON.stringify({db,hist,version:4},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='meu-treino-v4-backup.json';a.click()}
+function importData(){let inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);db=x.db||{};hist=x.hist||[];save();localStorage.setItem(H,JSON.stringify(hist));render();alert('Backup importado!')}catch{alert('Arquivo inválido.')}};r.readAsText(f)};inp.click()}
+render();
+</script></body></html>
